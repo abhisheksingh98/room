@@ -96,7 +96,7 @@ const Login = ({ history }) => {
           toast.error(err.response.data.errors);
         });
     } else {
-      toast.error('Please fill all fields');
+      toast.error('All the fields are required');
     }
   };
   return (
