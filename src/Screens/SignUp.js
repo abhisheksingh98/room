@@ -1,144 +1,98 @@
-import React, {useState} from 'react'
-import authSvg from '../assets/auth.svg'
-import {ToastContainer, toast} from 'react-toastify';
-import {authenticate,isAuth} from '../helpers/auth'
-import axios from 'axios';
-import {Redirect} from 'react-router-dom'
+import React, { useState } from 'react';
+import { Link, Redirect } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import { isAuth } from '../helpers/auth';
+import { registerUser } from '../helpers/localAuth';
 
-export default function SignUp() {
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        password1: '',
-        password2: ''
-      });
+export default function SignUp({ history }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password1: '',
+    password2: ''
+  });
 
-      const { name, email, password1, password2, textChange } = formData;
+  const { name, email, password1, password2 } = formData;
 
-      const handleChange = text => e => {
-        setFormData({ ...formData, [text]: e.target.value });
-      };
+  const handleChange = text => e => {
+    setFormData({ ...formData, [text]: e.target.value });
+  };
 
-      const handleSubmit = e => {
-        e.preventDefault();
-        if (name && email && password1) {
-          if (password1 === password2) {
-            setFormData({ ...formData, textChange: 'Submitting' });
-            axios
-              .post(`${process.env.REACT_APP_API_URL}/register`, {
-                name,
-                email,
-                password: password1
-              })
-              .then(res => {
-                setFormData({
-                  ...formData,
-                  name: '',
-                  email: '',
-                  password1: '',
-                  password2: '',
-                });
-    
-                toast.success(res.data.message);
-              })
-              .catch(err => {
-                setFormData({
-                  ...formData,
-                  name: '',
-                  email: '',
-                  password1: '',
-                  password2: '',
-                });
-                console.log(err.response);
-                toast.error(err.response.data.errors);
-              });
-          } else {
-            toast.error("Passwords doesn't match");
-          }
+  const handleSubmit = e => {
+    e.preventDefault();
+    if (name && email && password1) {
+      if (password1 === password2) {
+        const res = registerUser({ name, email, password: password1 });
+        if (res.success) {
+          setFormData({ name: '', email: '', password1: '', password2: '' });
+          toast.success(res.message);
+          history.push('/dashboard');
         } else {
-          toast.error('All the fields are required');
+          toast.error(res.message);
         }
-      };
-    return (
-        <div className='min-h-screen bg-gray-100 text-gray-900 flex justify-center'>
-             {isAuth() ? <Redirect to='/' /> : null}
-             <ToastContainer />
+      } else {
+        toast.error("Passwords do not match.");
+      }
+    } else {
+      toast.error('All fields are required.');
+    }
+  };
 
-             <div className='max-w-screen-xl m-0 sm:m-20 bg-white shadow sm:rounded-lg flex justify-center flex-1'>
-        <div className='lg:w-1/2 xl:w-5/12 p-6 sm:p-12'>
-          <div className='mt-12 flex flex-col items-center'>
-            <h1 className='text-2xl xl:text-3xl font-extrabold'>
-              Sign Up for Roomsfy
-            </h1>
+  return (
+    <div className='min-h-screen bg-slate-100 flex items-center justify-center p-6'>
+      {isAuth() ? <Redirect to='/' /> : null}
+      <ToastContainer />
 
-            <form
-              className='w-full flex-1 mt-8 text-red-500'
-              onSubmit={handleSubmit}
-            >
-              <div className='mx-auto max-w-xs relative '>
-                <input
-                  className='w-full px-8 py-4 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white'
-                  type='text'
-                  placeholder='Name'
-                  onChange={handleChange('name')}
-                  value={name}
-                />
-                <input
-                  className='w-full px-8 py-4 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white mt-5'
-                  type='email'
-                  placeholder='Email'
-                  onChange={handleChange('email')}
-                  value={email}
-                />
-                <input
-                  className='w-full px-8 py-4 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white mt-5'
-                  type='password'
-                  placeholder='Password'
-                  onChange={handleChange('password1')}
-                  value={password1}
-                />
-                <input
-                  className='w-full px-8 py-4 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white mt-5'
-                  type='password'
-                  placeholder='Confirm Password'
-                  onChange={handleChange('password2')}
-                  value={password2}
-                />
-                <button
-                  type='submit'
-                  className='mt-5 tracking-wide font-semibold bg-red-500 text-gray-100 w-full py-4 rounded-lg hover:bg-red-600 transition-all duration-300 ease-in-out flex items-center justify-center focus:shadow-outline focus:outline-none'
-                >
-                  <i className='fas fa-user-plus fa 1x w-6  -ml-2' />
-                  <span className='ml-3'>Sign Up</span>
-                </button>
-              </div>
-              <div className='my-12 border-b text-center'>
-                <div className='leading-none px-2 inline-block text-sm text-gray-600 tracking-wide font-medium bg-white transform translate-y-1/2'>
-                  Or Sign In with email
-                </div>
-              </div>
-              <div className='flex flex-col items-center'>
-                <a
-                  className='w-full max-w-xs font-bold shadow-sm rounded-lg py-3
-           bg-red-100 text-gray-800 flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none hover:shadow focus:shadow-sm focus:shadow-outline mt-5'
-                  href='/login'
-                  target='_self'
-                >
-                  <i className='fas fa-sign-in-alt fa 1x w-6  -ml-2 text-red-500' />
-                  <span className='ml-4'>Sign In</span>
-                </a>
-              </div>
-            </form>
+      <div className='bg-white rounded-2xl shadow-lg max-w-md w-full p-10 fade-in'>
+        <div className='text-center mb-10'>
+          <Link to="/" className='text-primary font-bold text-3xl tracking-tighter mb-4 inline-block'>
+            Roomsfy
+          </Link>
+          <h1 className='text-2xl font-bold text-slate-900'>Create an Account</h1>
+          <p className='text-slate-600 mt-2'>Join Roomsfy to start booking stays.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className='grid gap-4'>
+          <input
+            className='input-premium'
+            type='text'
+            placeholder='Full Name'
+            onChange={handleChange('name')}
+            value={name}
+          />
+          <input
+            className='input-premium'
+            type='email'
+            placeholder='Email Address'
+            onChange={handleChange('email')}
+            value={email}
+          />
+          <input
+            className='input-premium'
+            type='password'
+            placeholder='Password'
+            onChange={handleChange('password1')}
+            value={password1}
+          />
+          <input
+            className='input-premium'
+            type='password'
+            placeholder='Confirm Password'
+            onChange={handleChange('password2')}
+            value={password2}
+          />
+
+          <button type='submit' className='btn-primary w-full py-4 mt-2'>
+            Sign Up
+          </button>
+
+          <div className='text-center mt-6 pt-6 border-t border-slate-100'>
+            <p className='text-slate-600 text-sm'>
+              Already have an account? <Link to='/login' className='text-primary font-bold hover:underline'>Sign In</Link>
+            </p>
           </div>
-        </div>
-        <div className='flex-1 bg-red-100 text-center hidden lg:flex'>
-          <div
-            className='m-12 xl:m-16 w-full bg-contain bg-center bg-no-repeat'
-            style={{ backgroundImage: `url(${authSvg})` }}
-          ></div>
-        </div>
+        </form>
       </div>
-      ;
     </div>
-    )
+  );
 }
