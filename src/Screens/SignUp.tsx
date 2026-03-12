@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Link, Redirect } from 'react-router-dom';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
+import { useHistory, Link, Redirect } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import { isAuth } from '../helpers/auth';
 import { registerUser } from '../helpers/localAuth';
 
-export default function SignUp({ history }) {
+export default function SignUp() {
+  const history = useHistory();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,11 +15,11 @@ export default function SignUp({ history }) {
 
   const { name, email, password1, password2 } = formData;
 
-  const handleChange = text => e => {
+  const handleChange = (text: string) => (e: ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [text]: e.target.value });
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (name && email && password1) {
       if (password1 === password2) {
@@ -38,9 +39,10 @@ export default function SignUp({ history }) {
     }
   };
 
+  if (isAuth()) return <Redirect to='/' />;
+
   return (
     <div className='min-h-screen bg-slate-100 flex items-center justify-center p-6'>
-      {isAuth() ? <Redirect to='/' /> : null}
       <ToastContainer />
 
       <div className='bg-white rounded-2xl shadow-lg max-w-md w-full p-10 fade-in'>

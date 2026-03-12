@@ -1,60 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { isAuth, signout } from '../helpers/auth';
-import { Link } from 'react-router-dom';
+import { useHistory, Link } from 'react-router-dom';
 import moment from 'moment';
-import _ from 'lodash';
-import $ from 'jquery';
 
-// Import local premium assets
 import penthouseImg from '../assets/luxury_penthouse.png';
 import studioImg from '../assets/cozy_studio.png';
 import villaImg from '../assets/beachside_villa.png';
 import cabinImg from '../assets/mountain_cabin.png';
 
-// UGLY CODE: Maintaining these for the challenge
-var globalData = [];
+interface Room {
+    id: number;
+    name: string;
+    price: number;
+    available: boolean;
+    date: Date;
+    img: string;
+    location: string;
+}
 
-export default function Dashboard({ history }) {
-    var [rooms, setRooms] = useState([]);
-    var [filter, setFilter] = useState('');
-    var [loading, setLoading] = useState(false);
+const ROOM_DATA: Room[] = [
+    { id: 1, name: "Luxury Penthouse", price: 500, available: true, date: new Date(), img: penthouseImg, location: "New York, USA" },
+    { id: 2, name: "Cozy Studio", price: 120, available: true, date: new Date(), img: studioImg, location: "Paris, France" },
+    { id: 3, name: "Beachside Villa", price: 1200, available: true, date: new Date(), img: villaImg, location: "Malibu, USA" },
+    { id: 4, name: "Mountain Cabin", price: 300, available: true, date: new Date(), img: cabinImg, location: "Zermatt, Switzerland" },
+    { id: 5, name: "Urban Loft", price: 250, available: false, date: new Date(), img: studioImg, location: "Berlin, Germany" },
+    { id: 6, name: "Executive Suite", price: 800, available: true, date: new Date(), img: penthouseImg, location: "London, UK" }
+];
+
+export default function Dashboard() {
+    const history = useHistory();
+    const [rooms, setRooms] = useState<Room[]>([]);
+    const [filter, setFilter] = useState('');
+    const [priceLimit, setPriceLimit] = useState(0);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        // Keep internal legacy logic
-        $('#dashboard-title').css('color', 'var(--slate-900)');
-
         setLoading(true);
         setTimeout(() => {
-            var data = [
-                { id: 1, name: "Luxury Penthouse", price: 500, available: true, date: new Date(), img: penthouseImg, location: "New York, USA" },
-                { id: 2, name: "Cozy Studio", price: 120, available: true, date: new Date(), img: studioImg, location: "Paris, France" },
-                { id: 3, name: "Beachside Villa", price: 1200, available: true, date: new Date(), img: villaImg, location: "Malibu, USA" },
-                { id: 4, name: "Mountain Cabin", price: 300, available: true, date: new Date(), img: cabinImg, location: "Zermatt, Switzerland" },
-                { id: 5, name: "Urban Loft", price: 250, available: false, date: new Date(), img: studioImg, location: "Berlin, Germany" },
-                { id: 6, name: "Executive Suite", price: 800, available: true, date: new Date(), img: penthouseImg, location: "London, UK" }
-            ];
-            globalData = data;
-            setRooms(data);
+            setRooms(ROOM_DATA);
             setLoading(false);
         }, 800);
     }, []);
 
-    const handleSearch = () => {
-        var filtered = _.filter(globalData, function (o) {
-            return o.name.toLowerCase().includes(filter.toLowerCase()) || o.location.toLowerCase().includes(filter.toLowerCase());
-        });
-        setRooms(filtered);
-        if (filtered.length === 0) {
-            window.alert("No properties found for your search.");
-        }
-    };
+    const filteredRooms = rooms.filter(room => {
+        const matchesSearch = room.name.toLowerCase().includes(filter.toLowerCase()) ||
+            room.location.toLowerCase().includes(filter.toLowerCase());
+        const matchesPrice = priceLimit === 0 || room.price <= priceLimit;
+        return matchesSearch && matchesPrice;
+    });
 
     return (
         <div className='min-h-screen bg-white pb-20'>
-            {/* Header */}
             <header className='premium-header mb-8'>
                 <div className='container flex justify-between items-center'>
-                    <h1 id="dashboard-title" className='font-bold text-xl'>Explore Stays</h1>
+                    <h1 className='font-bold text-xl text-slate-900'>Explore Stays</h1>
                     <div className='flex items-center gap-6'>
                         <span className='text-sm font-medium text-slate-600'>Hello, {isAuth()?.name}</span>
                         <button onClick={() => signout(() => history.push('/'))} className='btn-secondary !py-2 !px-4 text-sm'>
@@ -65,7 +64,6 @@ export default function Dashboard({ history }) {
             </header>
 
             <main className='container fade-in'>
-                {/* Search Bar Refined */}
                 <div className='max-w-4xl mx-auto mb-12 flex flex-col md:flex-row gap-4 items-center bg-white border border-slate-200 p-2 rounded-2xl shadow-sm'>
                     <input
                         type="text"
@@ -76,28 +74,16 @@ export default function Dashboard({ history }) {
                     />
                     <div className='h-8 w-px bg-slate-200 hidden md:block'></div>
                     <select
-                        id="price-filter"
                         className='bg-white text-sm font-bold text-slate-900 border-none px-4 focus:ring-0 cursor-pointer'
-                        onChange={function (e) {
-                            var maxPrice = parseInt(e.target.value);
-                            console.log("Filtering by price (jQuery logic): " + maxPrice);
-                            // UGLY JQUERY FILTERING (Directly skipping React state for visibility)
-                            $('.room-card').each(function () {
-                                var price = parseInt($(this).find('.font-bold.text-slate-900').last().text().replace('$', ''));
-                                if (maxPrice === 0 || price <= maxPrice) {
-                                    $(this).show();
-                                } else {
-                                    $(this).hide();
-                                }
-                            });
-                        }}
+                        value={priceLimit}
+                        onChange={(e) => setPriceLimit(parseInt(e.target.value))}
                     >
                         <option value="0">Any price</option>
                         <option value="200">Under $200</option>
                         <option value="500">Under $500</option>
                         <option value="1000">Under $1000</option>
                     </select>
-                    <button onClick={handleSearch} className='btn-primary px-8 rounded-xl'>
+                    <button className='btn-primary px-8 rounded-xl'>
                         Search
                     </button>
                 </div>
@@ -108,7 +94,7 @@ export default function Dashboard({ history }) {
                     </div>
                 ) : (
                     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8'>
-                        {rooms.map(room => (
+                        {filteredRooms.map(room => (
                             <Link
                                 to={`/room/${room.id}`}
                                 key={room.id}

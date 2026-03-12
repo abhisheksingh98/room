@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Link, Redirect } from 'react-router-dom';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
+import { useHistory, Link, Redirect } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import { loginUser } from '../helpers/localAuth';
 import { authenticate, isAuth } from '../helpers/auth';
 
-const Login = ({ history }) => {
+const Login = () => {
+  const history = useHistory();
   const [formData, setFormData] = useState({
     email: '',
     password1: '',
@@ -12,16 +13,16 @@ const Login = ({ history }) => {
   });
   const { email, password1, textChange } = formData;
 
-  const handleChange = text => e => {
+  const handleChange = (text: string) => (e: ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [text]: e.target.value });
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (email && password1) {
       setFormData({ ...formData, textChange: 'Submitting' });
       const res = loginUser(email, password1);
-      if (res.success) {
+      if (res.success && res.user) {
         authenticate({ data: { token: res.token, user: res.user } }, () => {
           setFormData({ ...formData, email: '', password1: '', textChange: 'Submitted' });
           history.push('/dashboard');
@@ -36,9 +37,10 @@ const Login = ({ history }) => {
     }
   };
 
+  if (isAuth()) return <Redirect to='/' />;
+
   return (
     <div className='min-h-screen bg-slate-100 flex items-center justify-center p-6'>
-      {isAuth() ? <Redirect to='/' /> : null}
       <ToastContainer />
 
       <div className='bg-white rounded-2xl shadow-lg max-w-md w-full p-10 fade-in'>

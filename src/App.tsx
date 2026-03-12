@@ -1,21 +1,26 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useHistory, Link } from 'react-router-dom';
 import { signout, isAuth } from './helpers/auth';
 import { ToastContainer, toast } from 'react-toastify';
 
-function App({ history }) {
+interface AppProps {
+}
+
+function App() {
+  const history = useHistory();
+  const auth = isAuth();
+
   return (
     <div className='min-h-screen bg-white'>
       <ToastContainer />
 
-      {/* Navigation */}
       <nav className='premium-header'>
         <div className='container flex justify-between items-center'>
           <Link to="/" className='text-primary font-bold text-2xl tracking-tighter flex items-center gap-2'>
             <i className="fas fa-home"></i> Roomsfy
           </Link>
           <div className='flex gap-4 items-center'>
-            {isAuth() ? (
+            {auth ? (
               <>
                 <Link to="/dashboard" className='btn-secondary'>Go to Dashboard</Link>
                 <button
@@ -35,7 +40,6 @@ function App({ history }) {
         </div>
       </nav>
 
-      {/* Hero Section */}
       <main className='container mt-20 fade-in'>
         <div className='max-w-2xl'>
           <h1 className='text-6xl font-extrabold text-slate-900 leading-[1.1] tracking-tight mb-6'>
@@ -47,7 +51,7 @@ function App({ history }) {
           </p>
 
           <div className='flex gap-4'>
-            {isAuth() ? (
+            {auth ? (
               <Link to="/dashboard" className='btn-primary !py-4 !px-8 text-lg'>
                 Browse Collections
               </Link>
@@ -62,7 +66,6 @@ function App({ history }) {
           </div>
         </div>
 
-        {/* Feature Highlights */}
         <div className='grid-cols-4 mt-32 border-t border-slate-100 pt-16 mb-20'>
           <div>
             <h3 className='font-bold mb-2'>Verified Stays</h3>

@@ -2,11 +2,22 @@ import React, { useState } from 'react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from 'react-toastify';
-import { Link } from 'react-router-dom';
+import { useHistory, useParams, Link } from 'react-router-dom';
 
-export default function BookingForm({ match, history }) {
-    var [step, setStep] = useState(1);
-    var [bookingData, setBookingData] = useState({
+interface BookingData {
+    checkIn: Date;
+    checkOut: Date;
+    guests: number;
+    name: string;
+    email: string;
+    phone: string;
+}
+
+export default function BookingForm() {
+    const history = useHistory();
+    const { roomId } = useParams<{ roomId: string }>();
+    const [step, setStep] = useState(1);
+    const [bookingData, setBookingData] = useState<BookingData>({
         checkIn: new Date(),
         checkOut: new Date(),
         guests: 1,
@@ -15,14 +26,12 @@ export default function BookingForm({ match, history }) {
         phone: ''
     });
 
-    var roomId = match.params.roomId;
-
     const nextStep = () => { setStep(step + 1); }
     const prevStep = () => { setStep(step - 1); }
 
     const confirmBooking = () => {
-        var bookings = JSON.parse(localStorage.getItem('roomsfy_bookings') || '[]');
-        bookings.push({ ...bookingData, roomId: roomId, id: Date.now() });
+        const bookings = JSON.parse(localStorage.getItem('roomsfy_bookings') || '[]');
+        bookings.push({ ...bookingData, roomId, id: Date.now() });
         localStorage.setItem('roomsfy_bookings', JSON.stringify(bookings));
 
         toast.success("Property booked successfully!");
@@ -40,7 +49,7 @@ export default function BookingForm({ match, history }) {
                                 <label className='text-xs font-bold uppercase text-slate-400'>Check In</label>
                                 <DatePicker
                                     selected={bookingData.checkIn}
-                                    onChange={date => setBookingData({ ...bookingData, checkIn: date })}
+                                    onChange={(date: Date) => setBookingData({ ...bookingData, checkIn: date })}
                                     className='input-premium'
                                 />
                             </div>
@@ -48,7 +57,7 @@ export default function BookingForm({ match, history }) {
                                 <label className='text-xs font-bold uppercase text-slate-400'>Check Out</label>
                                 <DatePicker
                                     selected={bookingData.checkOut}
-                                    onChange={date => setBookingData({ ...bookingData, checkOut: date })}
+                                    onChange={(date: Date) => setBookingData({ ...bookingData, checkOut: date })}
                                     className='input-premium'
                                 />
                             </div>
@@ -66,7 +75,7 @@ export default function BookingForm({ match, history }) {
                                 type="number"
                                 className='input-premium'
                                 value={bookingData.guests}
-                                onChange={e => setBookingData({ ...bookingData, guests: e.target.value })}
+                                onChange={e => setBookingData({ ...bookingData, guests: parseInt(e.target.value) || 1 })}
                             />
                         </div>
                         <div className='flex gap-4'>
@@ -111,7 +120,6 @@ export default function BookingForm({ match, history }) {
                     <i className="fas fa-arrow-left"></i> Back to search
                 </Link>
 
-                {/* Progress Bar */}
                 <div className='w-full h-1 bg-slate-100 mb-8 rounded-full overflow-hidden'>
                     <div
                         className='h-full bg-primary transition-all duration-500 ease-out'
